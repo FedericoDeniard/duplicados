@@ -3,7 +3,7 @@
 ### 📦 Instalación desde el binario
 
 ```bash
-curl -L https://github.com/FedericoDeniard/duplicados/releases/tag/v1.0.0/duplicados -o /tmp/duplicados
+curl -L https://github.com/FedericoDeniard/duplicados/releases/latest/download/duplicados  -o /tmp/duplicados
 chmod +x /tmp/duplicados
 sudo mv /tmp/duplicados /usr/local/bin/duplicados
 ```
