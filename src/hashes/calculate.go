@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 )
 
@@ -55,14 +56,14 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(root string) []FileHash {
-	var results []FileHash
+func HashFiles(root string, excludedRoutes []string) map[string][]string {
+	results := make(map[string][]string)
 	resultChan := make(chan FileHash, 1000)
 	mu := &sync.Mutex{}
 	pool := NewWorkerPool(50)
 	pool.Run()
 
-	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan})
+	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan, excludedRoutes: excludedRoutes})
 
 	go func() {
 		pool.wg.Wait()
@@ -71,7 +72,7 @@ func HashFiles(root string) []FileHash {
 
 	for hash := range resultChan {
 		mu.Lock()
-		results = append(results, hash)
+		results[hash.MD5] = append(results[hash.MD5], hash.Path)
 		mu.Unlock()
 	}
 	return results
@@ -143,9 +144,10 @@ func (f *FileHashTask) Process() FileHash {
 }
 
 type FolderHashTask struct {
-	route      string
-	pool       *WorkerPool
-	resultChan chan FileHash
+	route          string
+	pool           *WorkerPool
+	resultChan     chan FileHash
+	excludedRoutes []string
 }
 
 func (f *FolderHashTask) Process() FileHash {
@@ -153,15 +155,23 @@ func (f *FolderHashTask) Process() FileHash {
 	if err != nil {
 		return FileHash{}
 	}
+
 	for _, file := range files {
 		path := filepath.Join(f.route, file.Name())
-		// fmt.Println(path)
 		if file.IsDir() {
-			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan})
-
+			if file.Name()[0] == '.' {
+				continue
+			}
+			if slices.Contains(f.excludedRoutes, file.Name()) || slices.Contains(f.excludedRoutes, path) {
+				continue
+			}
+			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan, excludedRoutes: f.excludedRoutes})
 		} else {
 			file, err := os.Open(path)
 			if err != nil {
+				continue
+			}
+			if file.Name()[0] == '.' {
 				continue
 			}
 			task := &FileHashTask{file: file, resultChan: f.resultChan}
