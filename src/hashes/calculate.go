@@ -12,9 +12,10 @@ import (
 )
 
 type CustomFlags struct {
-	ShowHiddenFiles bool
-	ExcludeRoutes   []string
-	FileExtensions  []string
+	ShowHiddenFiles        bool
+	ExcludeRoutes          []string
+	FileExtensions         []string
+	ExcludedFileExtensions []string
 }
 
 type FileHash struct {
@@ -173,6 +174,8 @@ func (f *FolderHashTask) Process() FileHash {
 			}
 			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan, flags: f.flags})
 		} else {
+			fileIsNotInFileExtensions := len(f.flags.FileExtensions) > 0 && !slices.Contains(f.flags.FileExtensions, filepath.Ext(file.Name()))
+			fileIsInExcludedFileExtensions := len(f.flags.ExcludedFileExtensions) > 0 && slices.Contains(f.flags.ExcludedFileExtensions, filepath.Ext(file.Name()))
 			file, err := os.Open(path)
 			if err != nil {
 				continue
@@ -180,8 +183,7 @@ func (f *FolderHashTask) Process() FileHash {
 			if file.Name()[0] == '.' {
 				continue
 			}
-			fmt.Println(f.flags.FileExtensions, filepath.Ext(file.Name()))
-			if len(f.flags.FileExtensions) > 0 && !slices.Contains(f.flags.FileExtensions, filepath.Ext(file.Name())) {
+			if fileIsNotInFileExtensions || fileIsInExcludedFileExtensions {
 				continue
 			}
 			task := &FileHashTask{file: file, resultChan: f.resultChan}
