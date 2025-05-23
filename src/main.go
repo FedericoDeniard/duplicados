@@ -32,9 +32,6 @@ func main() {
 	}
 
 	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
-	defer func() {
-		fmt.Printf("\033[1;32mTiempo total: %v\033[0m\n", time.Since(start))
-	}()
 
 	basePath, _ := os.Getwd()
 	filesHashes := hashes.HashFiles(basePath, customFlags)
@@ -49,6 +46,7 @@ func main() {
 		}
 	}
 
+	fmt.Printf("\033[1;32mTiempo total: %v\033[0m\n", time.Since(start))
 	showWithPager(output)
 }
 
