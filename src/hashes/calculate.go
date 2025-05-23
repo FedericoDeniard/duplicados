@@ -14,6 +14,7 @@ import (
 type CustomFlags struct {
 	ShowHiddenFiles bool
 	ExcludeRoutes   []string
+	FileExtensions  []string
 }
 
 type FileHash struct {
@@ -177,6 +178,10 @@ func (f *FolderHashTask) Process() FileHash {
 				continue
 			}
 			if file.Name()[0] == '.' {
+				continue
+			}
+			fmt.Println(f.flags.FileExtensions, filepath.Ext(file.Name()))
+			if len(f.flags.FileExtensions) > 0 && !slices.Contains(f.flags.FileExtensions, filepath.Ext(file.Name())) {
 				continue
 			}
 			task := &FileHashTask{file: file, resultChan: f.resultChan}
