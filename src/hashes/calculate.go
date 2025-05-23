@@ -11,6 +11,11 @@ import (
 	"sync"
 )
 
+type CustomFlags struct {
+	ShowHiddenFiles bool
+	ExcludeRoutes   []string
+}
+
 type FileHash struct {
 	Path string
 	MD5  string
@@ -56,14 +61,14 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(root string, excludedRoutes []string) map[string][]string {
+func HashFiles(root string, flags CustomFlags) map[string][]string {
 	results := make(map[string][]string)
 	resultChan := make(chan FileHash, 1000)
 	mu := &sync.Mutex{}
 	pool := NewWorkerPool(50)
 	pool.Run()
 
-	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan, excludedRoutes: excludedRoutes})
+	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan, flags: flags})
 
 	go func() {
 		pool.wg.Wait()
@@ -144,10 +149,10 @@ func (f *FileHashTask) Process() FileHash {
 }
 
 type FolderHashTask struct {
-	route          string
-	pool           *WorkerPool
-	resultChan     chan FileHash
-	excludedRoutes []string
+	route      string
+	pool       *WorkerPool
+	resultChan chan FileHash
+	flags      CustomFlags
 }
 
 func (f *FolderHashTask) Process() FileHash {
@@ -159,13 +164,13 @@ func (f *FolderHashTask) Process() FileHash {
 	for _, file := range files {
 		path := filepath.Join(f.route, file.Name())
 		if file.IsDir() {
-			if file.Name()[0] == '.' {
+			if !f.flags.ShowHiddenFiles && file.Name()[0] == '.' {
 				continue
 			}
-			if slices.Contains(f.excludedRoutes, file.Name()) || slices.Contains(f.excludedRoutes, path) {
+			if slices.Contains(f.flags.ExcludeRoutes, file.Name()) || slices.Contains(f.flags.ExcludeRoutes, path) {
 				continue
 			}
-			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan, excludedRoutes: f.excludedRoutes})
+			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan, flags: f.flags})
 		} else {
 			file, err := os.Open(path)
 			if err != nil {
