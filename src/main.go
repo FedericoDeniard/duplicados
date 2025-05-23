@@ -15,7 +15,13 @@ func main() {
 	start := time.Now()
 	var excludedRoutes []string
 	excludedRoutesFlag := flag.String("exclude", "", "Rutas a excluir separadas por comas")
+	var helpFlag = flag.Bool("help", false, "Mostrar ayuda")
+
 	flag.Parse()
+	if *helpFlag {
+		flag.Usage()
+		return
+	}
 	if *excludedRoutesFlag != "" {
 		excludedRoutes = strings.Split(*excludedRoutesFlag, ",")
 	}
