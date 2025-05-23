@@ -1,3 +1,19 @@
+# Buscador de Archivos Repetidos en Go
+
+Un buscador de archivos repetidos para Linux desarrollado en Go. Recorre directorios de forma recursiva utilizando **goroutines** para realizar búsquedas paralelas, logrando tiempos de ejecución rapidísimos incluso en sistemas de archivos grandes.
+
+## 🚀 Objetivo
+
+El objetivo principal del proyecto fue practicar el uso de **goroutines** y comprender mejor cómo aprovechar el paralelismo en Go para crear herramientas eficientes desde la línea de comandos (CLI).
+
+## 🔧 Características
+
+- Búsqueda de archivos repetidos
+- Concurrencia con goroutines para mayor velocidad
+- Exclusión de rutas específicas
+- Exclusión de extensiones específicas
+- Uso simple desde la terminal
+
 ## 🛠️ Instalación y uso
 
 ### 📦 Instalación desde el binario
@@ -35,3 +51,20 @@ Para desinstalarlo:
 ```bash
 sudo rm /usr/local/bin/duplicados
 ```
+
+### 🏷️ Flags disponibles
+
+| Flag               | Descripción                                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| `-exclude`         | Lista de directorios a excluir, separados por comas sin espacios |
+| `-file-extensions` | Lista de extensiones a buscar, separadas por comas sin espacios  |
+| `-show-hidden`     | Muestra archivos ocultos                                         |
+| `-help`            | Muestra el mensaje de ayuda                                      |
+
+## 🤝 Contribuciones
+
+¡Las contribuciones son bienvenidas! Si encontrás un bug o querés proponer mejoras, sentite libre de abrir un issue o un pull request.
+
+---
+
+Desarrollado con Go 🦫 por [Federico Deniard](https://github.com/FedericoDeniard)
