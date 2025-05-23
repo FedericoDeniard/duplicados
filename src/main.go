@@ -19,6 +19,8 @@ func main() {
 	var showHiddenFiles = flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
 	var fileExtensions []string
 	fileExtensionsFlag := flag.String("file-extensions", "", "Extensiones a buscar separadas por comas")
+	var excludedFileExtensions []string
+	excludedFileExtensionsFlag := flag.String("exclude-file-extensions", "", "Extensiones a excluir separadas por comas")
 
 	flag.Parse()
 	if *helpFlag {
@@ -31,10 +33,14 @@ func main() {
 	if *fileExtensionsFlag != "" {
 		fileExtensions = strings.Split(*fileExtensionsFlag, ",")
 	}
+	if *excludedFileExtensionsFlag != "" {
+		excludedFileExtensions = strings.Split(*excludedFileExtensionsFlag, ",")
+	}
 	customFlags := hashes.CustomFlags{
-		ShowHiddenFiles: *showHiddenFiles,
-		ExcludeRoutes:   excludedRoutes,
-		FileExtensions:  fileExtensions,
+		ShowHiddenFiles:        *showHiddenFiles,
+		ExcludeRoutes:          excludedRoutes,
+		FileExtensions:         fileExtensions,
+		ExcludedFileExtensions: excludedFileExtensions,
 	}
 
 	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
