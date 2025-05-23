@@ -16,6 +16,7 @@ func main() {
 	var excludedRoutes []string
 	excludedRoutesFlag := flag.String("exclude", "", "Rutas a excluir separadas por comas")
 	var helpFlag = flag.Bool("help", false, "Mostrar ayuda")
+	var showHiddenFiles = flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
 
 	flag.Parse()
 	if *helpFlag {
@@ -25,6 +26,10 @@ func main() {
 	if *excludedRoutesFlag != "" {
 		excludedRoutes = strings.Split(*excludedRoutesFlag, ",")
 	}
+	customFlags := hashes.CustomFlags{
+		ShowHiddenFiles: *showHiddenFiles,
+		ExcludeRoutes:   excludedRoutes,
+	}
 
 	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
 	defer func() {
@@ -32,7 +37,7 @@ func main() {
 	}()
 
 	basePath, _ := os.Getwd()
-	filesHashes := hashes.HashFiles(basePath, excludedRoutes)
+	filesHashes := hashes.HashFiles(basePath, customFlags)
 
 	var output string
 	i := 1
