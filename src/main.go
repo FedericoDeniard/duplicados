@@ -1,48 +1,41 @@
 package main
 
 import (
+	"bytes"
 	"duplicate-files/src/hashes"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sync"
+	"os/exec"
+	"time"
 )
 
 func main() {
-	basePath := filepath.Join("/home/federico/Documentos/Programación/")
-	files, err := os.ReadDir(basePath)
-	if err != nil {
-		panic(err)
+	start := time.Now()
+	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
+	defer func() {
+		fmt.Printf("\033[1;32mTiempo total: %v\033[0m\n", time.Since(start))
+	}()
+	basePath, _ := os.Getwd()
+	filesHashes := hashes.HashFiles(basePath)
+
+	classified := hashes.GroupByHashes(filesHashes)
+	var output string
+	i := 1
+	for _, paths := range classified {
+		if len(paths) > 1 {
+			output += fmt.Sprintf("\033[1;32m%d.\033[0m %v\n", i, paths)
+			output += "\033[1;33m-------------------------------------------------------------------------\033[0m\n"
+			i++
+		}
 	}
 
-	var filesHashes []hashes.FileHash
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+	showWithPager(output)
+}
 
-	hashes.HashFiles(files, basePath, &filesHashes, &wg, &mu)
-	wg.Wait()
-	fmt.Println(len(filesHashes))
-
-	// classified := filesManager.ClassifyFilesOrRoutes(files)
-	// if classified.Error != nil {
-	// 	panic(classified.Error)
-	// }
-
-	// var hasedFiles []hashes.FileHash
-	// for _, file := range classified.Files {
-	// 	md5, err := hashes.CalculateMD5("./pruebas/" + file)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	hasedFiles = append(hasedFiles, hashes.FileHash{Path: "./pruebas/" + file, MD5: md5})
-	// }
-
-	// // Buscar duplicados
-	// groupsByHashes := hashes.GroupByHashes(hasedFiles)
-	// fmt.Println("Duplicados")
-	// for _, paths := range groupsByHashes {
-	// 	if len(paths) > 1 {
-	// 		fmt.Println(paths)
-	// 	}
-	// }
+func showWithPager(output string) error {
+	cmd := exec.Command("less", "-R")
+	cmd.Stdin = bytes.NewReader([]byte(output))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

@@ -16,11 +16,7 @@ type FileHash struct {
 }
 
 // Es más ligera
-func CalculateMD5(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
+func CalculateMD5(file *os.File) (string, error) {
 	defer file.Close()
 
 	hash := md5.New()
@@ -59,32 +55,119 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(files []os.DirEntry, basePath string, filesHashes *[]FileHash, wg *sync.WaitGroup, mu *sync.Mutex) {
-	for _, file := range files {
-		route := filepath.Join(basePath, file.Name())
-		if !file.IsDir() {
-			wg.Add(1)
-			go func(route string) {
-				defer wg.Done()
-				md5, err := CalculateMD5(route)
-				if err != nil {
-					return
-				}
-				mu.Lock()
-				*filesHashes = append(*filesHashes, FileHash{Path: route, MD5: md5})
-				mu.Unlock()
-			}(route)
-		} else {
-			wg.Add(1)
-			go func(route string) {
-				defer wg.Done()
-				subFiles, err := os.ReadDir(route)
-				if err != nil {
-					return
-				}
-				HashFiles(subFiles, route, filesHashes, wg, mu)
-			}(route)
-		}
-		// fmt.Println(route)
+func HashFiles(root string) []FileHash {
+	var results []FileHash
+	resultChan := make(chan FileHash, 1000)
+	mu := &sync.Mutex{}
+	pool := NewWorkerPool(50)
+	pool.Run()
+
+	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan})
+
+	go func() {
+		pool.wg.Wait()
+		close(resultChan)
+	}()
+
+	for hash := range resultChan {
+		mu.Lock()
+		results = append(results, hash)
+		mu.Unlock()
 	}
+	return results
+}
+
+type Task interface {
+	Process() FileHash
+}
+
+type WorkerPool struct {
+	concurrency int
+	tasksChan   chan Task
+	wg          *sync.WaitGroup
+}
+
+func (wp *WorkerPool) worker() {
+	for task := range wp.tasksChan {
+		task.Process()
+		wp.wg.Done()
+	}
+}
+
+func (wp *WorkerPool) AddTask(task Task) {
+	wp.wg.Add(1)
+	go func() {
+		wp.tasksChan <- task
+	}()
+}
+
+func (wp *WorkerPool) Run() {
+	for i := 0; i < wp.concurrency; i++ {
+		go wp.worker()
+	}
+}
+
+func (wp *WorkerPool) Close() {
+	close(wp.tasksChan)
+}
+
+func (wp *WorkerPool) Wait() {
+	wp.wg.Wait()
+}
+
+func NewWorkerPool(concurrency int) *WorkerPool {
+	return &WorkerPool{
+		tasksChan:   make(chan Task, concurrency),
+		concurrency: concurrency,
+		wg:          &sync.WaitGroup{},
+	}
+}
+
+type FileHashTask struct {
+	file       *os.File
+	resultChan chan FileHash
+}
+
+func (f *FileHashTask) Process() FileHash {
+	md5, err := CalculateMD5(f.file)
+	if err != nil {
+		return FileHash{}
+	}
+	path, err := filepath.Abs(f.file.Name())
+	if err != nil {
+		path = f.file.Name()
+	}
+	hash := FileHash{Path: path, MD5: md5}
+	f.resultChan <- hash
+	return hash
+}
+
+type FolderHashTask struct {
+	route      string
+	pool       *WorkerPool
+	resultChan chan FileHash
+}
+
+func (f *FolderHashTask) Process() FileHash {
+	files, err := os.ReadDir(f.route)
+	if err != nil {
+		return FileHash{}
+	}
+	for _, file := range files {
+		path := filepath.Join(f.route, file.Name())
+		// fmt.Println(path)
+		if file.IsDir() {
+			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan})
+
+		} else {
+			file, err := os.Open(path)
+			if err != nil {
+				continue
+			}
+			task := &FileHashTask{file: file, resultChan: f.resultChan}
+			f.pool.AddTask(task)
+
+		}
+	}
+	return FileHash{}
 }
