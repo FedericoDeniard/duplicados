@@ -56,8 +56,8 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(root string, excludedRoutes []string) []FileHash {
-	var results []FileHash
+func HashFiles(root string, excludedRoutes []string) map[string][]string {
+	results := make(map[string][]string)
 	resultChan := make(chan FileHash, 1000)
 	mu := &sync.Mutex{}
 	pool := NewWorkerPool(50)
@@ -72,7 +72,7 @@ func HashFiles(root string, excludedRoutes []string) []FileHash {
 
 	for hash := range resultChan {
 		mu.Lock()
-		results = append(results, hash)
+		results[hash.MD5] = append(results[hash.MD5], hash.Path)
 		mu.Unlock()
 	}
 	return results

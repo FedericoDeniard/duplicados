@@ -3,7 +3,7 @@ package filesManager
 import "os"
 
 type DirClassified struct {
-	Files  []string
+	MD5    []string
 	Routes []string
 	Error  error
 }
@@ -18,5 +18,5 @@ func ClassifyFilesOrRoutes(files []os.DirEntry) DirClassified {
 		}
 	}
 
-	return DirClassified{Files: filePaths, Routes: routesPaths}
+	return DirClassified{MD5: filePaths, Routes: routesPaths}
 }

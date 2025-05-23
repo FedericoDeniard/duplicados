@@ -28,10 +28,9 @@ func main() {
 	basePath, _ := os.Getwd()
 	filesHashes := hashes.HashFiles(basePath, excludedRoutes)
 
-	classified := hashes.GroupByHashes(filesHashes)
 	var output string
 	i := 1
-	for _, paths := range classified {
+	for _, paths := range filesHashes {
 		if len(paths) > 1 {
 			output += fmt.Sprintf("\033[1;32m%d.\033[0m %v\n", i, paths)
 			output += "\033[1;33m-------------------------------------------------------------------------\033[0m\n"
