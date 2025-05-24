@@ -69,6 +69,7 @@ func HashFiles(root string, flags customFlags.CustomFlags) map[string][]string {
 	go func() {
 		pool.Wait()
 		close(resultChan)
+		pool.Close()
 	}()
 
 	for hash := range resultChan {

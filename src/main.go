@@ -34,7 +34,6 @@ func main() {
 	}
 	customFlags.Normalize()
 
-	fmt.Println(customFlags)
 	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
 
 	basePath, _ := os.Getwd()
