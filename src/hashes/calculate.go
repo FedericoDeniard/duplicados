@@ -3,25 +3,14 @@ package hashes
 import (
 	"crypto/md5"
 	"crypto/sha256"
+	customFlags "duplicate-files/src/flags"
+	"duplicate-files/src/types"
+	"duplicate-files/src/workerpool"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"slices"
 	"sync"
 )
-
-type CustomFlags struct {
-	ShowHiddenFiles        bool
-	ExcludeRoutes          []string
-	FileExtensions         []string
-	ExcludedFileExtensions []string
-}
-
-type FileHash struct {
-	Path string
-	MD5  string
-}
 
 // Es más ligera
 func CalculateMD5(file *os.File) (string, error) {
@@ -51,7 +40,7 @@ func CalculateSHA256(filePath string) (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func GroupByHashes(files []FileHash) map[string][]string {
+func GroupByHashes(files []types.FileHash) map[string][]string {
 	duplicates := make(map[string][]string)
 	for _, file := range files {
 		if _, ok := duplicates[file.MD5]; ok {
@@ -63,17 +52,22 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(root string, flags CustomFlags) map[string][]string {
+func HashFiles(root string, flags customFlags.CustomFlags) map[string][]string {
 	results := make(map[string][]string)
-	resultChan := make(chan FileHash, 1000)
+	resultChan := make(chan types.FileHash, 1000)
 	mu := &sync.Mutex{}
-	pool := NewWorkerPool(50)
+	pool := workerpool.NewWorkerPool(50)
 	pool.Run()
 
-	pool.AddTask(&FolderHashTask{route: root, pool: pool, resultChan: resultChan, flags: flags})
+	createTask := func(file *os.File, resultChan chan types.FileHash) *workerpool.FileHashTask {
+		return workerpool.NewFileHashTask(file, resultChan, CalculateMD5)
+	}
+
+	folderTask := workerpool.NewFolderHashTask(root, pool, resultChan, flags, createTask)
+	pool.AddTask(folderTask)
 
 	go func() {
-		pool.wg.Wait()
+		pool.Wait()
 		close(resultChan)
 	}()
 
@@ -82,114 +76,6 @@ func HashFiles(root string, flags CustomFlags) map[string][]string {
 		results[hash.MD5] = append(results[hash.MD5], hash.Path)
 		mu.Unlock()
 	}
+
 	return results
-}
-
-type Task interface {
-	Process() FileHash
-}
-
-type WorkerPool struct {
-	concurrency int
-	tasksChan   chan Task
-	wg          *sync.WaitGroup
-}
-
-func (wp *WorkerPool) worker() {
-	for task := range wp.tasksChan {
-		task.Process()
-		wp.wg.Done()
-	}
-}
-
-func (wp *WorkerPool) AddTask(task Task) {
-	wp.wg.Add(1)
-	go func() {
-		wp.tasksChan <- task
-	}()
-}
-
-func (wp *WorkerPool) Run() {
-	for i := 0; i < wp.concurrency; i++ {
-		go wp.worker()
-	}
-}
-
-func (wp *WorkerPool) Close() {
-	close(wp.tasksChan)
-}
-
-func (wp *WorkerPool) Wait() {
-	wp.wg.Wait()
-}
-
-func NewWorkerPool(concurrency int) *WorkerPool {
-	return &WorkerPool{
-		tasksChan:   make(chan Task, concurrency),
-		concurrency: concurrency,
-		wg:          &sync.WaitGroup{},
-	}
-}
-
-type FileHashTask struct {
-	file       *os.File
-	resultChan chan FileHash
-}
-
-func (f *FileHashTask) Process() FileHash {
-	md5, err := CalculateMD5(f.file)
-	if err != nil {
-		return FileHash{}
-	}
-	path, err := filepath.Abs(f.file.Name())
-	if err != nil {
-		path = f.file.Name()
-	}
-	hash := FileHash{Path: path, MD5: md5}
-	f.resultChan <- hash
-	return hash
-}
-
-type FolderHashTask struct {
-	route      string
-	pool       *WorkerPool
-	resultChan chan FileHash
-	flags      CustomFlags
-}
-
-func (f *FolderHashTask) Process() FileHash {
-	files, err := os.ReadDir(f.route)
-	if err != nil {
-		return FileHash{}
-	}
-
-	for _, file := range files {
-		path := filepath.Join(f.route, file.Name())
-		if file.IsDir() {
-			if !f.flags.ShowHiddenFiles && file.Name()[0] == '.' {
-				continue
-			}
-			if slices.Contains(f.flags.ExcludeRoutes, file.Name()) || slices.Contains(f.flags.ExcludeRoutes, path) {
-				continue
-			}
-			f.pool.AddTask(&FolderHashTask{route: path, pool: f.pool, resultChan: f.resultChan, flags: f.flags})
-		} else {
-			fileIsNotInFileExtensions := len(f.flags.FileExtensions) > 0 && !slices.Contains(f.flags.FileExtensions, filepath.Ext(file.Name()))
-			fileIsInExcludedFileExtensions := len(f.flags.ExcludedFileExtensions) > 0 && slices.Contains(f.flags.ExcludedFileExtensions, filepath.Ext(file.Name()))
-			file, err := os.Open(path)
-			if err != nil {
-				continue
-			}
-			if file.Name()[0] == '.' {
-				continue
-			}
-			if fileIsNotInFileExtensions || fileIsInExcludedFileExtensions {
-				continue
-			}
-			task := &FileHashTask{file: file, resultChan: f.resultChan}
-			f.pool.AddTask(task)
-
-		}
-	}
-	return FileHash{}
 }
