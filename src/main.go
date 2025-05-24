@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	customFlags "duplicate-files/src/flags"
 	"duplicate-files/src/hashes"
 	"flag"
 	"fmt"
@@ -13,13 +14,10 @@ import (
 
 func main() {
 	start := time.Now()
-	var excludedRoutes []string
 	excludedRoutesFlag := flag.String("exclude", "", "Rutas a excluir separadas por comas")
 	var helpFlag = flag.Bool("help", false, "Mostrar ayuda")
 	var showHiddenFiles = flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
-	var fileExtensions []string
 	fileExtensionsFlag := flag.String("file-extensions", "", "Extensiones a buscar separadas por comas")
-	var excludedFileExtensions []string
 	excludedFileExtensionsFlag := flag.String("exclude-file-extensions", "", "Extensiones a excluir separadas por comas")
 
 	flag.Parse()
@@ -27,22 +25,16 @@ func main() {
 		flag.Usage()
 		return
 	}
-	if *excludedRoutesFlag != "" {
-		excludedRoutes = strings.Split(*excludedRoutesFlag, ",")
-	}
-	if *fileExtensionsFlag != "" {
-		fileExtensions = strings.Split(*fileExtensionsFlag, ",")
-	}
-	if *excludedFileExtensionsFlag != "" {
-		excludedFileExtensions = strings.Split(*excludedFileExtensionsFlag, ",")
-	}
-	customFlags := hashes.CustomFlags{
-		ShowHiddenFiles:        *showHiddenFiles,
-		ExcludeRoutes:          excludedRoutes,
-		FileExtensions:         fileExtensions,
-		ExcludedFileExtensions: excludedFileExtensions,
-	}
 
+	customFlags := customFlags.CustomFlags{
+		ShowHiddenFiles:        *showHiddenFiles,
+		ExcludeRoutes:          strings.Split(*excludedRoutesFlag, ","),
+		FileExtensions:         strings.Split(*fileExtensionsFlag, ","),
+		ExcludedFileExtensions: strings.Split(*excludedFileExtensionsFlag, ","),
+	}
+	customFlags.Normalize()
+
+	fmt.Println(customFlags)
 	fmt.Printf("\033[1;33mIniciando búsqueda de duplicados\033[0m\n")
 
 	basePath, _ := os.Getwd()

@@ -3,6 +3,7 @@ package hashes
 import (
 	"crypto/md5"
 	"crypto/sha256"
+	customFlags "duplicate-files/src/flags"
 	"fmt"
 	"io"
 	"os"
@@ -10,13 +11,6 @@ import (
 	"slices"
 	"sync"
 )
-
-type CustomFlags struct {
-	ShowHiddenFiles        bool
-	ExcludeRoutes          []string
-	FileExtensions         []string
-	ExcludedFileExtensions []string
-}
 
 type FileHash struct {
 	Path string
@@ -63,7 +57,7 @@ func GroupByHashes(files []FileHash) map[string][]string {
 	return duplicates
 }
 
-func HashFiles(root string, flags CustomFlags) map[string][]string {
+func HashFiles(root string, flags customFlags.CustomFlags) map[string][]string {
 	results := make(map[string][]string)
 	resultChan := make(chan FileHash, 1000)
 	mu := &sync.Mutex{}
@@ -154,7 +148,7 @@ type FolderHashTask struct {
 	route      string
 	pool       *WorkerPool
 	resultChan chan FileHash
-	flags      CustomFlags
+	flags      customFlags.CustomFlags
 }
 
 func (f *FolderHashTask) Process() FileHash {
