@@ -15,10 +15,11 @@ import (
 func main() {
 	start := time.Now()
 	excludedRoutesFlag := flag.String("exclude", "", "Rutas a excluir separadas por comas")
-	var helpFlag = flag.Bool("help", false, "Mostrar ayuda")
-	var showHiddenFiles = flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
+	helpFlag := flag.Bool("help", false, "Mostrar ayuda")
+	showHiddenFiles := flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
 	fileExtensionsFlag := flag.String("file-extensions", "", "Extensiones a buscar separadas por comas")
 	excludedFileExtensionsFlag := flag.String("exclude-file-extensions", "", "Extensiones a excluir separadas por comas")
+	useSHA256Flag := flag.Bool("use-sha256", false, "Usar SHA256 en lugar de MD5")
 
 	flag.Parse()
 	if *helpFlag {
@@ -31,6 +32,7 @@ func main() {
 		ExcludeRoutes:          strings.Split(*excludedRoutesFlag, ","),
 		FileExtensions:         strings.Split(*fileExtensionsFlag, ","),
 		ExcludedFileExtensions: strings.Split(*excludedFileExtensionsFlag, ","),
+		UseSHA256:              *useSHA256Flag,
 	}
 	customFlags.Normalize()
 

@@ -25,11 +25,7 @@ func CalculateMD5(file *os.File) (string, error) {
 }
 
 // Es más pesada pero más segura
-func CalculateSHA256(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
+func CalculateSHA256(file *os.File) (string, error) {
 	defer file.Close()
 
 	hash := sha256.New()
@@ -40,6 +36,7 @@ func CalculateSHA256(filePath string) (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
+// This function is unused
 func GroupByHashes(files []types.FileHash) map[string][]string {
 	duplicates := make(map[string][]string)
 	for _, file := range files {
@@ -60,7 +57,11 @@ func HashFiles(root string, flags customFlags.CustomFlags) map[string][]string {
 	pool.Run()
 
 	createTask := func(file *os.File, resultChan chan types.FileHash) *workerpool.FileHashTask {
-		return workerpool.NewFileHashTask(file, resultChan, CalculateMD5)
+		hashFunc := CalculateMD5
+		if flags.UseSHA256 {
+			hashFunc = CalculateSHA256
+		}
+		return workerpool.NewFileHashTask(file, resultChan, hashFunc)
 	}
 
 	folderTask := workerpool.NewFolderHashTask(root, pool, resultChan, flags, createTask)
