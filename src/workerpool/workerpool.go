@@ -73,7 +73,7 @@ func (f *FolderHashTask) Process() types.FileHash {
 			if !f.Flags.ShowHiddenFiles && file.Name()[0] == '.' {
 				continue
 			}
-			if slices.Contains(f.Flags.ExcludeRoutes, file.Name()) || slices.Contains(f.Flags.ExcludeRoutes, path) {
+			if slices.Contains(f.Flags.ExcludedRoutes, file.Name()) || slices.Contains(f.Flags.ExcludedRoutes, path) {
 				continue
 			}
 			f.Pool.AddTask(NewFolderHashTask(path, f.Pool, f.ResultChan, f.Flags, f.createTask))

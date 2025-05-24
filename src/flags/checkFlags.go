@@ -4,16 +4,16 @@ import "strings"
 
 type CustomFlags struct {
 	ShowHiddenFiles        bool
-	ExcludeRoutes          []string
+	ExcludedRoutes         []string
 	FileExtensions         []string
 	ExcludedFileExtensions []string
 	UseSHA256              bool
 }
 
 func (cf *CustomFlags) Normalize() {
-	cf.ExcludeRoutes = cleanSlice(cf.ExcludeRoutes)
-	if len(cf.ExcludeRoutes) == 0 {
-		cf.ExcludeRoutes = nil
+	cf.ExcludedRoutes = cleanSlice(cf.ExcludedRoutes)
+	if len(cf.ExcludedRoutes) == 0 {
+		cf.ExcludedRoutes = nil
 	}
 
 	cf.FileExtensions = cleanSlice(cf.FileExtensions)

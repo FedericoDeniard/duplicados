@@ -1,71 +1,72 @@
-# Buscador de Archivos Repetidos en Go
+# Duplicate Files Finder in Go
 
-Un buscador de archivos repetidos para Linux desarrollado en Go. Recorre directorios de forma recursiva utilizando **goroutines** para realizar búsquedas paralelas, logrando tiempos de ejecución rapidísimos incluso en sistemas de archivos grandes.
+A duplicate file finder for Linux developed in Go. It recursively scans directories using **goroutines** for parallel searches, achieving extremely fast execution times even on large file systems.
 
-## 🚀 Objetivo
+## 🚀 Goal
 
-El objetivo principal del proyecto fue practicar el uso de **goroutines** y comprender mejor cómo aprovechar el paralelismo en Go para crear herramientas eficientes desde la línea de comandos (CLI).
+The main goal of this project was to practice using **goroutines** and better understand how to leverage Go's concurrency features to create efficient command-line tools (CLI).
 
-## 🔧 Características
+## 🔧 Features
 
-- Búsqueda de archivos repetidos
-- Concurrencia con goroutines para mayor velocidad
-- Exclusión de rutas específicas
-- Exclusión de extensiones específicas
-- Uso simple desde la terminal
+- Duplicate file search
+- Goroutine concurrency for improved speed
+- Specific path exclusion
+- Specific file extension exclusion
+- Simple terminal usage
 
-## 🛠️ Instalación y uso
+## 🛠️ Installation and Usage
 
-### 📦 Instalación desde el binario
+### 📦 Installation from Binary
 
 ```bash
-curl -L https://github.com/FedericoDeniard/duplicados/releases/latest/download/duplicados  -o /tmp/duplicados
+curl -L https://github.com/FedericoDeniard/duplicados/releases/latest/download/duplicados -o /tmp/duplicados
 chmod +x /tmp/duplicados
 sudo mv /tmp/duplicados /usr/local/bin/duplicados
 ```
 
-### 📦 Instalación desde el código fuente
+### 📦 Installation from Source
 
-Cloná el repositorio:
+Clone the repository:
 
 ```bash
 git clone https://github.com/FedericoDeniard/duplicados.git
 cd duplicados
 ```
 
-Compilá e instalá el programa:
+Build and install the program:
 
 ```bash
 go build -o dist/duplicados src/main.go
 sudo mv dist/duplicados /usr/local/bin/duplicados
 ```
 
-Luego podés usar el comando `duplicados` directamente desde cualquier lugar:
+Then you can use the `duplicados` command from anywhere:
 
 ```bash
 duplicados
 ```
 
-Para desinstalarlo:
+To uninstall:
 
 ```bash
 sudo rm /usr/local/bin/duplicados
 ```
 
-### 🏷️ Flags disponibles
+### 🏷️ Available Flags
 
-| Flag               | Descripción                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| `-exclude`         | Lista de directorios a excluir, separados por comas sin espacios |
-| `-file-extensions` | Lista de extensiones a buscar, separadas por comas sin espacios  |
-| `-show-hidden`     | Muestra archivos ocultos                                         |
-| `-use-sha256`      | Usa SHA256 en lugar de MD5 (más seguro, pero más lento)          |
-| `-help`            | Muestra el mensaje de ayuda                                      |
+| Flag            | Description                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| `-exclude-dirs` | Comma-separated list of directories to exclude from search           |
+| `-include-ext`  | Comma-separated list of file extensions to include (e.g., .jpg,.png) |
+| `-exclude-ext`  | Comma-separated list of file extensions to exclude                   |
+| `-show-hidden`  | Include hidden files and directories in search                       |
+| `-use-sha256`   | Use SHA256 for hashing (slower but more secure than default MD5)     |
+| `-help`         | Show help message                                                    |
 
-## 🤝 Contribuciones
+## 🤝 Contributions
 
-¡Las contribuciones son bienvenidas! Si encontrás un bug o querés proponer mejoras, sentite libre de abrir un issue o un pull request.
+Contributions are welcome! If you find a bug or want to suggest improvements, feel free to open an issue or submit a pull request.
 
 ---
 
-Desarrollado con Go 🦫 por [Federico Deniard](https://github.com/FedericoDeniard)
+Built with Go 🦫 by [Federico Deniard](https://github.com/FedericoDeniard)

@@ -14,12 +14,12 @@ import (
 
 func main() {
 	start := time.Now()
-	excludedRoutesFlag := flag.String("exclude", "", "Rutas a excluir separadas por comas")
-	helpFlag := flag.Bool("help", false, "Mostrar ayuda")
-	showHiddenFiles := flag.Bool("show-hidden", false, "Mostrar archivos ocultos")
-	fileExtensionsFlag := flag.String("file-extensions", "", "Extensiones a buscar separadas por comas")
-	excludedFileExtensionsFlag := flag.String("exclude-file-extensions", "", "Extensiones a excluir separadas por comas")
-	useSHA256Flag := flag.Bool("use-sha256", false, "Usar SHA256 en lugar de MD5")
+	excludedDirsFlag := flag.String("exclude-dirs", "", "Comma-separated list of directories to exclude from search")
+	helpFlag := flag.Bool("help", false, "Show help message")
+	showHiddenFiles := flag.Bool("show-hidden", false, "Include hidden files and directories in search")
+	includeExtensions := flag.String("include-ext", "", "Comma-separated list of file extensions to include (e.g., .jpg,.png)")
+	excludeExtensions := flag.String("exclude-ext", "", "Comma-separated list of file extensions to exclude")
+	useSHA256Flag := flag.Bool("use-sha256", false, "Use SHA256 for hashing (slower but more secure than default MD5)")
 
 	flag.Parse()
 	if *helpFlag {
@@ -29,9 +29,9 @@ func main() {
 
 	customFlags := customFlags.CustomFlags{
 		ShowHiddenFiles:        *showHiddenFiles,
-		ExcludeRoutes:          strings.Split(*excludedRoutesFlag, ","),
-		FileExtensions:         strings.Split(*fileExtensionsFlag, ","),
-		ExcludedFileExtensions: strings.Split(*excludedFileExtensionsFlag, ","),
+		ExcludedRoutes:         strings.Split(*excludedDirsFlag, ","),
+		FileExtensions:         strings.Split(*includeExtensions, ","),
+		ExcludedFileExtensions: strings.Split(*excludeExtensions, ","),
 		UseSHA256:              *useSHA256Flag,
 	}
 	customFlags.Normalize()
