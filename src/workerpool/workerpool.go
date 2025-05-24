@@ -13,48 +13,6 @@ type Task interface {
 	Process() types.FileHash
 }
 
-type WorkerPool struct {
-	concurrency int
-	tasksChan   chan Task
-	wg          *sync.WaitGroup
-}
-
-func (wp *WorkerPool) worker() {
-	for task := range wp.tasksChan {
-		task.Process()
-		wp.wg.Done()
-	}
-}
-
-func (wp *WorkerPool) AddTask(task Task) {
-	wp.wg.Add(1)
-	go func() {
-		wp.tasksChan <- task
-	}()
-}
-
-func (wp *WorkerPool) Run() {
-	for i := 0; i < wp.concurrency; i++ {
-		go wp.worker()
-	}
-}
-
-func (wp *WorkerPool) Close() {
-	close(wp.tasksChan)
-}
-
-func (wp *WorkerPool) Wait() {
-	wp.wg.Wait()
-}
-
-func NewWorkerPool(concurrency int) *WorkerPool {
-	return &WorkerPool{
-		tasksChan:   make(chan Task, concurrency),
-		concurrency: concurrency,
-		wg:          &sync.WaitGroup{},
-	}
-}
-
 type FileHashTask struct {
 	file        *os.File
 	resultChan  chan types.FileHash
@@ -69,10 +27,6 @@ func NewFileHashTask(file *os.File, resultChan chan types.FileHash, hashFunc fun
 		hashFunc:    hashFunc,
 		getFilePath: defaultGetFilePath,
 	}
-}
-
-func defaultGetFilePath(file *os.File) (string, error) {
-	return filepath.Abs(file.Name())
 }
 
 func (f *FileHashTask) Process() types.FileHash {
@@ -141,4 +95,50 @@ func (f *FolderHashTask) Process() types.FileHash {
 		}
 	}
 	return types.FileHash{}
+}
+
+type WorkerPool struct {
+	concurrency int
+	tasksChan   chan Task
+	wg          *sync.WaitGroup
+}
+
+func NewWorkerPool(concurrency int) *WorkerPool {
+	return &WorkerPool{
+		tasksChan:   make(chan Task, concurrency),
+		concurrency: concurrency,
+		wg:          &sync.WaitGroup{},
+	}
+}
+
+func (wp *WorkerPool) Run() {
+	for i := 0; i < wp.concurrency; i++ {
+		go wp.worker()
+	}
+}
+
+func (wp *WorkerPool) worker() {
+	for task := range wp.tasksChan {
+		task.Process()
+		wp.wg.Done()
+	}
+}
+
+func (wp *WorkerPool) AddTask(task Task) {
+	wp.wg.Add(1)
+	go func() {
+		wp.tasksChan <- task
+	}()
+}
+
+func (wp *WorkerPool) Wait() {
+	wp.wg.Wait()
+}
+
+func (wp *WorkerPool) Close() {
+	close(wp.tasksChan)
+}
+
+func defaultGetFilePath(file *os.File) (string, error) {
+	return filepath.Abs(file.Name())
 }
