@@ -40,11 +40,7 @@ func CalculateSHA256(file *os.File) (string, error) {
 func GroupByHashes(files []types.FileHash) map[string][]string {
 	duplicates := make(map[string][]string)
 	for _, file := range files {
-		if _, ok := duplicates[file.MD5]; ok {
-			duplicates[file.MD5] = append(duplicates[file.MD5], file.Path)
-		} else {
-			duplicates[file.MD5] = []string{file.Path}
-		}
+		duplicates[file.MD5] = append(duplicates[file.MD5], file.Path)
 	}
 	return duplicates
 }
