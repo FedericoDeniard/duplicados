@@ -19,9 +19,9 @@ The main goal of this project was to practice using **goroutines** and better un
 ### 📦 Installation from Binary
 
 ```bash
-curl -L https://github.com/FedericoDeniard/duplicados/releases/latest/download/dupes/tmp/dupes
+curl -L https://github.com/FedericoDeniard/duplicados/releases/latest/download/dupes -o /tmp/dupes
 chmod +x /tmp/dupes
-sudo mv /tmp/dupesr/local/bin/dupes
+sudo mv /tmp/dupes /usr/local/bin/dupes
 ```
 
 ### 📦 Installation from Source
