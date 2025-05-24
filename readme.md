@@ -59,6 +59,7 @@ sudo rm /usr/local/bin/duplicados
 | `-exclude`         | Lista de directorios a excluir, separados por comas sin espacios |
 | `-file-extensions` | Lista de extensiones a buscar, separadas por comas sin espacios  |
 | `-show-hidden`     | Muestra archivos ocultos                                         |
+| `-use-sha256`      | Usa SHA256 en lugar de MD5 (más seguro, pero más lento)          |
 | `-help`            | Muestra el mensaje de ayuda                                      |
 
 ## 🤝 Contribuciones

@@ -7,6 +7,7 @@ type CustomFlags struct {
 	ExcludeRoutes          []string
 	FileExtensions         []string
 	ExcludedFileExtensions []string
+	UseSHA256              bool
 }
 
 func (cf *CustomFlags) Normalize() {
